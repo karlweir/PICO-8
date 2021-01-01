@@ -3,7 +3,9 @@ version 29
 __lua__
 --init function
 
+
 function _init()
+
 player={}
  player.at=0
  player.coords={flr(109),flr(112)}
@@ -32,7 +34,8 @@ player={}
 --game variables
  score=0
  frame=0
- 
+
+
 dialog:queue("hello, friend...")
 dialog:queue("it's good to see you")
 dialog:queue("why don't i tell you a story about how i was once a god")
@@ -41,8 +44,7 @@ dialog:queue("but life seems to have passed me by")
 dialog:queue("and now, due to the actions of some 'undesirables', i don't have much time left")
 dialog:queue("anyway... ") 
 dialog:queue("have fun catching whatever those things are falling from the sky") 
-dialog:queue("maybe you'll be able to make some use of them")  
-dialog:queue("in fact, come speak to me once you've collected 20 of those things and i'll show you their true power!")
+dialog:queue("maybe you'll be able to make some use of them") 
 end
 -->8
 -- update function
@@ -77,11 +79,11 @@ function _draw()
 --clear screen
  rectfill(0,0,128,128,12)
 --drawshuttle
- spr(192,52,88,4,4)
+-- spr(192,52,88,4,4)
 --draw tree
  spr(12,52,88,4,4)
 --draw moon
- --spr(196,80,15,4,4)
+-- spr(196,80,15,4,4)
 --draw clouds
  spr(32,cloud1coords[1],cloud1coords[2],4,2)
  spr(52,cloud2coords[1],cloud2coords[2],3,1)
@@ -89,13 +91,9 @@ function _draw()
 
 --draw bunnies
  spr(bunnies[1].spr,bunnies[1].coords[1],bunnies[1].coords[2],1,2,bunnies[1].flipped)
- if playdialog==true then
-  spr(bunnies[1].talkspr,4,50,1,2)
-  
- end
- spr(bunnies[2].spr,bunnies[2].coords[1],bunnies[2].coords[2],1,2,bunnies[2].flipped)
- spr(bunnies[3].spr,bunnies[3].coords[1],bunnies[3].coords[2],1,2,bunnies[3].flipped)
- spr(bunnies[4].spr,bunnies[4].coords[1],bunnies[4].coords[2],1,2,bunnies[4].flipped)
+-- spr(bunnies[2].spr,bunnies[2].coords[1],bunnies[2].coords[2],1,2,bunnies[2].flipped)
+-- spr(bunnies[3].spr,bunnies[3].coords[1],bunnies[3].coords[2],1,2,bunnies[3].flipped)
+-- spr(bunnies[4].spr,bunnies[4].coords[1],bunnies[4].coords[2],1,2,bunnies[4].flipped)
  
 --draw player
  spr(player.spr,player.coords[1],player.coords[2])
@@ -110,9 +108,6 @@ function _draw()
  map(0,0,0,118)
 --draw score
  print(score,5,5,10)
- print(player.coords[1],5,15,10)
- print(partfreq,5,25,10)
- print(bunnies[1].at,5,35,10)
 --draw petals
  for particle in all(particles) do
   pset(particle.x,particle.y,particle.col)
@@ -395,7 +390,7 @@ function particlelogic()
   if particle.y >= player.coords[2]-8
   and particle.y <= player.coords[2]-6
   and particle.x >= player.coords[1]
-  and particle.x <= player.coords[1]+8 then
+  and particle.x <= player.coords[1]+7 then
    del (particles,particle)
    score += 1
    sfx(rnd(42))
@@ -450,8 +445,8 @@ function moveclouds()
 end
 __gfx__
 00000000003003000030030000300300aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa777777771111222200000000000000000000000000000000
-00000000003ff300003ff300003ff300a7aaaaa9aaa7aaaaaaaaaaa9aaaa7aaaaaaaaaaaaaaaaa997777777711112222000000000000000bbb00000000000000
-00700700003ff300003ff300003ff300aaaaaaa90aaaaaaaaaaaaa900aa7aaaaaaaaaaaaaaaaa99077777777117777220000000000000bbbbbbb000000000000
+00000000003ff300003ff300003ff300a7aaaaa9aaa7aaaaaaaaaaa9aaaa7aaaaaaaaaaaaaaaaa99777777771111222200000000000000000000000000000000
+00700700003ff300003ff300003ff300aaaaaaa90aaaaaaaaaaaaa900aa7aaaaaaaaaaaaaaaaa990777777771177772200000000000000bbbbb0000000000000
 00077000003333000033330000333300aaaaaaa900aaaaaaaaaaa90000aaaaaaaaaaaaaaaaaa99007777777711777722000000000000bbbbbbbbb00000000000
 000770000033330000333300003333000aaaaa90000aaaaaaaa99000000aaaaaaaaaaaaaaa99900007777770337777990000000000bbbbbbbbbbbbb000000000
 007007000099990000999900009999000099990000000999999000000000099999999999999000000077770033777799000000000bbbbfbbbbb3bbbb00000000
