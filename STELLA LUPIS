@@ -3,6 +3,211 @@ version 29
 __lua__
 --init function
 
+--pal(12,5+128,1)
+pal(11,11+128,1)
+
+function _init()
+--swap 0x30 for 0x3n where n is the color that will be swapped for the gradient
+--poke(0x5f5f,0x30+12)
+--put the gradient colors in the table below:
+--pal({[0]=0x82,0x82,0x84,0x84,4,4,0x89,0x89,0x8e,0x8e,0x8f,0x8f,15,15,0x87,0x87},2)
+--blend lines
+memset(0x5f70,0xaa,16)
+player={}
+ player.at=0
+ player.coords={flr(109),flr(112)}
+ player.size={8,8}
+ player.speed=1
+ player.spr=1
+ player.hasbowl1=true
+ player.hasbowl2=false
+ player.hasbowl3=false
+ bowl={}
+ bowl.coords={player.coords[1],112}
+ bowl.size={8,8}
+ bowl.spr=4
+--particle frequency
+ partfreq=25
+ tsincelastpart=1
+--dialog bool
+-- playdialog=false
+--bunny variables
+ bunnies={}
+ bunnies[1]={coords={12,104},currentdialog=2,at=3,spr=64,talkspr=78,jmprng=10000,jmpdly=1000,jmpstart=64,jmpend=75,flipped=true,direction=1}
+ bunnies[2]={coords={44,104},currentdialog=2,at=3,spr=128,talkspr=78,jmprng=10000,jmpdly=2000,jmpstart=128,jmpend=139,flipped=false,direction=-1}
+ bunnies[3]={coords={80,104},currentdialog=2,at=3,spr=160,talkspr=78,jmprng=1000,jmpdly=10,jmpstart=160,jmpend=171,flipped=false,direction=-1}
+ bunnies[4]={coords={110,104},currentdialog=2,at=3,spr=96,talkspr=78,jmprng=1000,jmpdly=100,jmpstart=96,jmpend=107,flipped=false,direction=-1}
+
+--game variables
+ score=0
+ frame=0
+
+
+dialog:queue("hello, friend...")
+dialog:queue("it's good to see you")
+dialog:queue("why don't i tell you a story about how i was once a god")
+dialog:queue("people would come from miles around and offer me gifts")
+dialog:queue("but life seems to have passed me by")
+dialog:queue("and now, due to the actions of some 'undesirables', i don't have much time left")
+dialog:queue("anyway... ") 
+dialog:queue("have fun catching whatever those things are falling from the sky") 
+dialog:queue("maybe you'll be able to make some use of them") 
+end
+-->8
+-- update function
+function _update60()
+ playerbehaviour()
+ petals()
+ particlelogic()
+ moveclouds()
+ 
+ bunnyjump(1)
+ bunnyjump(2)
+ bunnyjump(3)
+ bunnyjump(4)
+ 
+ dialog:update()
+  
+ if (#dialog.dialog_queue == 0) then
+  --playdialog=false
+  -- restarts cart once dialog is complete
+  --_init()
+ end
+
+-- play music based on frame number
+ frame += 1
+ if frame == 1 then
+  music(1)
+ end 
+end
+-->8
+-- draw function
+function _draw()
+--clear screen
+ rectfill(0,0,128,128,12)
+--drawshuttle
+-- spr(192,52,88,4,4)
+--draw tree
+ spr(12,52,88,4,4)
+--draw moon
+-- spr(196,80,15,4,4)
+--draw clouds
+ spr(32,cloud1coords[1],cloud1coords[2],4,2)
+ spr(52,cloud2coords[1],cloud2coords[2],3,1)
+ spr(36,cloud3coords[1],cloud3coords[2],1,1)
+
+--draw bunnies
+ spr(bunnies[1].spr,bunnies[1].coords[1],bunnies[1].coords[2],1,2,bunnies[1].flipped)
+-- spr(bunnies[2].spr,bunnies[2].coords[1],bunnies[2].coords[2],1,2,bunnies[2].flipped)
+-- spr(bunnies[3].spr,bunnies[3].coords[1],bunnies[3].coords[2],1,2,bunnies[3].flipped)
+-- spr(bunnies[4].spr,bunnies[4].coords[1],bunnies[4].coords[2],1,2,bunnies[4].flipped)
+ 
+--draw player
+ spr(player.spr,player.coords[1],player.coords[2])
+--draw bowl 
+ spr(bowl.spr,bowl.coords[1],bowl.coords[2]-8)
+
+
+--talk to bunny
+ dialog:draw()
+  
+--draw ground
+ map(0,0,0,118)
+--draw score
+ print(score,5,5,10)
+--draw petals
+ for particle in all(particles) do
+  pset(particle.x,particle.y,particle.col)
+ end 
+end
+-->8
+--player code
+
+function playerbehaviour()
+--move player 
+ if btn(⬅️) then
+  player.at+=1
+  player.coords[1]-=player.speed
+  bowl.coords[1]-=player.speed
+  if player.at==8 then
+	  player.spr+=1
+	  player.at=0
+	 end
+	 if player.spr==4 then
+	  player.spr=2
+	 end
+	   
+ elseif btn(➡️) then
+  player.at+=1
+  player.coords[1]+=player.speed
+  bowl.coords[1]+=player.speed
+  if player.at==8 then
+   player.spr+=1
+   player.at=0
+  end
+  if player.spr==4 then
+   player.spr=2
+  end
+ else
+  player.spr=1
+ end 
+  
+--keep player on screen
+ if player.coords[1]<0 then
+  player.coords[1]=0
+  bowl.coords[1]=0
+ end
+ if player.coords[1]>=128-player.size[1] then
+  player.coords[1]=128-player.size[1]
+  bowl.coords[1]=128-player.size[1]
+ end
+  
+-- track time since last particle was caught
+ tsincelastpart += 1
+  
+-- make bowl flash 
+ if tsincelastpart < 4 then
+  bowl.spr=10
+ else
+  bowl.spr=4
+ end
+end
+-->8
+--bunny code
+-- make bunnies jump
+function bunnyjump(bunny)
+ bunnies[bunny].at+=1
+ if bunnies[bunny].at>=rnd(bunnies[bunny].jmprng)+bunnies[bunny].jmpdly then
+  bunnies[bunny].at=0
+ end
+ if bunnies[bunny].at==3 then
+  bunnies[bunny].spr+=1
+  bunnies[bunny].coords[1]+=bunnies[bunny].direction 
+  bunnies[bunny].at=0
+  if bunnies[bunny].spr==bunnies[bunny].jmpend then
+   bunnies[bunny].spr=bunnies[bunny].jmpstart
+   bunnies[bunny].at=6
+  end
+  if bunnies[bunny].coords[1]<5 then
+   bunnies[bunny].flipped=true
+   bunnies[bunny].direction=1
+  elseif bunnies[bunny].coords[1]>118 then
+   bunnies[bunny].flipped=false
+   bunnies[bunny].direction=-1
+  end
+ end
+end
+
+-->8
+--dialog code
+
+
+
+ if currentdialog == 2 then
+  dialog:queue("♥♥♥")
+  dialog:queue("♥♥♥♥♥♥")
+ end
+
 dialog = {
   x = 16,
   y = 53,
@@ -10,7 +215,6 @@ dialog = {
   max_chars_per_line = 27,
   max_lines = 4,
   dialog_queue = {},
-  blinking_counter = 0,
   init = function(self)
   end,
   queue = function(self, message, autoplay)
@@ -145,10 +349,6 @@ dialog = {
       end
     end
 
-    if (not self.autoplay) then
-      self.blinking_counter += 1
-      if self.blinking_counter > 30 then self.blinking_counter = 0 end
-    end
   end,
   draw = function(self)
     local screen_width = 128
@@ -161,271 +361,53 @@ dialog = {
 }
 
 
-function _init()
-game={}
- game.start=true
- game.paused=false
- game.won=false
-player={}
- player.at=0
- player.coords={109,112}
- player.size={8,8}
- player.speed=0.25
- player.spr=1
- bowl={}
- bowl.coords={player.coords[1],112}
- bowl.size={8,8}
- bowl.spr=4
---particle frequency
- partfreq=300
---dialog bool
- playdialog=false
---bunny variables
- bunny1={}
- bunny2={}
- bunny3={}
- bunny4={}
- bunny1.coords={12,104}
- bunny1.at=3
- bunny2.at=0
- bunny3.at=0
- bunny4.at=0
- bunny1.spr=64
- bunny1.prompt=true
- isbunny1flipped=true
- bunny1.direction=1
- bunny2.spr=128
- bunny2.coords={44,104}
- isbunny2flipped=false
- bunny2.direction=-1
- bunny3.spr=160
- bunny3.coords={80,104}
- isbunny3flipped=false
- bunny3.direction=-1
- bunny4.spr=96
- bunny4.coords={110,104}
- isbunny4flipped=false
- bunny4.direction=-1
+-->8
+--particle code
+--spawn table with individual
+--particle attributes and add
+--them to larger 'particles'
+--table 
 
---dialog
- dialog:queue("hello, friend...")
- dialog:queue("it's good to see you")
- dialog:queue("why don't i tell you a story about how i was once a god")
- dialog:queue("people would come from miles around and offer me gifts")
- dialog:queue("but life seems to have passed me by")
- dialog:queue("and now, due to the actions of some 'undesirables', i don't have much time left")
- dialog:queue("anyway... ") 
- dialog:queue("have fun catching whatever those things are falling from the sky") 
- dialog:queue("maybe you'll be able to make some use of them")  
---cloud variables
- cloud1coords={-50,25}
- cloud2coords={128,30}
- cloud3coords={-50,20}
---game variables
- score=0
- frame=0
 --create table for petals
  particles={}
 --petal color selection
  pcol={2,3,4,8,10}
  
- function playerbehaviour()
---move player 
-  if btn(⬅️) then
-   player.at+=1
-   player.coords[1]-=player.speed
-   bowl.coords[1]-=player.speed
-   if player.at==8 then
-	   player.spr+=1
-	   player.at=0
-	  end
-	  if player.spr==4 then
-	   player.spr=2
-	  end
-	   
-  elseif btn(➡️) then
-   player.at+=1
-   player.coords[1]+=player.speed
-   bowl.coords[1]+=player.speed
-   if player.at==8 then
-    player.spr+=1
-    player.at=0
-   end
-   if player.spr==4 then
-    player.spr=2
-   end
-  else
-   player.spr=1
-  end 
-  
---keep player on screen
-  if player.coords[1]<0 then
-   player.coords[1]=0
-   bowl.coords[1]=0
-  end
-  if player.coords[1]>=128-player.size[1] then
-   player.coords[1]=128-player.size[1]
-   bowl.coords[1]=128-player.size[1]
-  end
- end
-
--- bunny interaction
- function talktobunny1()
-  if bunny1.prompt==true then
-   print("🅾️",bunny1.coords[1],102,10)
-  end
- end
- 
--- make bunnies jump
- function bunny1jump()
-  bunny1.at+=1
-  if bunny1.at>=flr(rnd(10000)+1000) then
-   bunny1.at=0
-  end
-  if bunny1.at==3 then
-   bunny1.spr+=1
-   bunny1.coords[1]+=bunny1.direction 
-   bunny1.at=0
-   if bunny1.spr==75 then
-    bunny1.spr=64
-    bunny1.at=6
-   end
-   if bunny1.coords[1]<5 then
-    isbunny1flipped=true
-    bunny1.direction=1
-   elseif bunny1.coords[1]>118 then
-    isbunny1flipped=false
-    bunny1.direction=-1
-   end
-  end
- end
- --mixy
- function bunny2jump()
-  bunny2.at+=1
-  if bunny2.at>=flr(rnd(10000)+1000) then
-   bunny2.at=0
-  end
-  if bunny2.at==3 then
-   bunny2.spr+=1
-   bunny2.coords[1]+=bunny2.direction 
-   bunny2.at=0
-   if bunny2.spr==139 then
-    bunny2.spr=128
-    bunny2.at=6
-   end
-   if bunny2.coords[1]<5 then
-    isbunny2flipped=true
-    bunny2.direction=1
-   elseif bunny2.coords[1]>118 then
-    isbunny2flipped=false
-    bunny2.direction=-1
-   end
-  end
- end
- 
- function bunny3jump()
-  bunny3.at+=1
-  if bunny3.at>=flr(rnd(1000)+10) then
-   bunny3.at=0
-  end
-  if bunny3.at==3 then
-   bunny3.spr+=1
-   bunny3.coords[1]+=bunny3.direction 
-   bunny3.at=0
-   if bunny3.spr==171 then
-    bunny3.spr=160
-    bunny3.at=6
-   end
-   if bunny3.coords[1]<5 then
-    isbunny3flipped=true
-    bunny3.direction=1
-   elseif bunny3.coords[1]>118 then
-    isbunny3flipped=false
-    bunny3.direction=-1
-   end
-  end
- end
- 
-
- function bunny4jump()
-  bunny4.at+=1
-  if bunny4.at>=flr(rnd(1000)+10) then
-   bunny4.at=0
-  end
-  if bunny4.at==3 then
-   bunny4.spr+=1
-   bunny4.coords[1]+=bunny4.direction 
-   bunny4.at=0
-   if bunny4.spr==108 then
-    bunny4.spr=96
-    bunny4.at=6
-   end
-   if bunny4.coords[1]<5 then
-    isbunny4flipped=true
-    bunny4.direction=1
-   elseif bunny4.coords[1]>118 then
-    isbunny4flipped=false
-    bunny4.direction=-1
-   end
-  end
- end
- 
---move clouds
- function moveclouds()
-  cloud1coords[1] += 0.05
-  cloud2coords[1] -= 0.03
-  cloud3coords[1] += 0.07
-  if cloud1coords[1] >= 160 then
-   cloud1coords[1] = -50
-  end
-  if cloud2coords[1] <= -50 then
-   cloud2coords[1] = 128
-  end
-  if cloud3coords[1] >= 140 then
-   cloud3coords[1] = -50
-  end
- end
-
---spawn table with individual
---particle attributes and add
---them to larger 'particles'
---table 
- function spawnparticle (x,y,vx,vy,c)
-  particle = {}
-  particle.x = x
-  particle.y = y
-  particle.velx = vx
-  particle.vely = vy
-  particle.col = c
-  add(particles,particle)
- end
+function spawnparticle (x,y,vx,vy,c)
+ particle = {}
+ particle.x = x
+ particle.y = y
+ particle.velx = vx
+ particle.vely = vy
+ particle.col = c
+ add(particles,particle)
+end
 
 --delete from table when y>110
 --change xy based on velocity
- function particlelogic()
-  for particle in all(particles) do
-   particle.x += particle.velx
-   particle.y += particle.vely
-   if particle.y > 120 then
-    del (particles,particle)
-   end
+function particlelogic()
+ for particle in all(particles) do
+  particle.x += particle.velx
+  particle.y += particle.vely
+  if particle.y > 120 then
+   del (particles,particle)
+  end
 --if particle collides with
 --top of bowl
-   if particle.y >= player.coords[2]-8
-   and particle.y <= player.coords[2]-6
-   and particle.x >= player.coords[1]
-   and particle.x <= player.coords[1]+8 then
-    del (particles,particle)
-    score += 1
-    sfx(rnd(42))
-    partfreq=partfreq-0.5
-    if partfreq<15 then
-     partfreq=15
-    end
+  if particle.y >= player.coords[2]-8
+  and particle.y <= player.coords[2]-6
+  and particle.x >= player.coords[1]
+  and particle.x <= player.coords[1]+7 then
+   del (particles,particle)
+   score += 1
+   sfx(rnd(42))
+   tsincelastpart=0
+   partfreq=partfreq-0.5
+   if partfreq<15 then
+    partfreq=15
    end
-  end 
- end
-
+  end
+ end 
 end
 
 function petals()
@@ -447,98 +429,36 @@ function petals()
  end
 end
 -->8
--- update function
-function _update60()
- if game.start==true and
-  game.paused==false then
-  playerbehaviour()
-  petals()
-  particlelogic()
-  moveclouds()
- 
-  bunny1jump()
-  bunny2jump()
-  bunny3jump()
-  bunny4jump()
-  
-  if player.coords[1]>bunny1.coords[1]-8
-   and player.coords[1]<bunny1.coords[1]+8
-   and btn(🅾️) then
-   playdialog=true
-   bunny1.prompt=false  
-  end
-  
-  if playdialog==true then
-   dialog:update()
-  end
-  
-  
+--cloud code
 
-  if (#dialog.dialog_queue == 0) then
-    playdialog=false
-    -- restarts cart once dialog is complete
-    --_init()
-  end
-  
+--cloud variables
+cloud1coords={-50,25}
+cloud2coords={128,30}
+cloud3coords={-50,20}
 
-  frame += 1
-  if frame == 1 then
-   --music(0)
-  end
- end 
-end
--->8
--- draw function
-function _draw()
---clear screen
- rectfill(0,0,128,128,12)
---drawshuttle
- spr(192,52,88,4,4)
---draw tree
- spr(12,52,88,4,4)
---draw clouds
- spr(32,cloud1coords[1],cloud1coords[2],4,2)
- spr(52,cloud2coords[1],cloud2coords[2],3,1)
- spr(36,cloud3coords[1],cloud3coords[2],1,1)
-
---draw bunnies
- spr(bunny1.spr,bunny1.coords[1],bunny1.coords[2],1,2,isbunny1flipped)
- talktobunny1()
- if playdialog==true then
-  spr(78,4,50,1,2)
+function moveclouds()
+ cloud1coords[1] += 0.05
+ cloud2coords[1] -= 0.03
+ cloud3coords[1] += 0.07
+ if cloud1coords[1] >= 160 then
+  cloud1coords[1] = -50
  end
- --spr(bunny2.spr,bunny2.coords[1],bunny2.coords[2],1,2,isbunny2flipped)
- --spr(bunny3.spr,bunny3.coords[1],bunny3.coords[2],1,2,isbunny3flipped)
- --spr(bunny4.spr,bunny4.coords[1],bunny4.coords[2],1,2,isbunny4flipped)
- 
---draw player
- spr(player.spr,player.coords[1],player.coords[2])
---draw bowl 
- spr(4,bowl.coords[1],bowl.coords[2]-8)
-
-
---talk to bunny
- dialog:draw()
-  
---draw ground
- map(0,0,0,118)
---draw score
- print(score,5,5,10)
- print(partfreq,5,14,10)
---draw petals
- for particle in all(particles) do
-  pset(particle.x,particle.y,particle.col)
- end 
+ if cloud2coords[1] <= -50 then
+  cloud2coords[1] = 128
+ end
+ if cloud3coords[1] >= 140 then
+  cloud3coords[1] = -50
+ end
 end
 __gfx__
-00000000003003000030030000300300aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa000000000000000000000000000000000000000000000000
-00000000003ff300003ff300003ff300a7aaaaa9aaa7aaaaaaaaaaa9aaaa7aaaaaaaaaaaaaaaaa990000000000000000000000000000000bbb00000000000000
-00700700003ff300003ff300003ff300aaaaaaa90aaaaaaaaaaaaa900aa7aaaaaaaaaaaaaaaaa99000000000000000000000000000000bbbbbbb000000000000
-00077000003333000033330000333300aaaaaaa900aaaaaaaaaaa90000aaaaaaaaaaaaaaaaaa99000000000000000000000000000000bbbbbbbbb00000000000
-000770000033330000333300003333000aaaaa90000aaaaaaaa99000000aaaaaaaaaaaaaaa99900000000000000000000000000000bbbbbbbbbbbbb000000000
-007007000099990000999900009999000099990000000999999000000000099999999999999000000000000000000000000000000bbbbfbbbbb3bbbb00000000
-000000000090090000f0090000900f0000f00f00000000f00f0000000000000000f00f0000000000000000000000000000000000bbbbbbbbbbbbbbbbb0000000
-0000000000f00f0000000f0000f0000000f00f00000000f00f0000000000000000f00f000000000000000000000000000000000bbbbbbbbbbbbbbbbbbb000000
+00000000003003000030030000300300aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa777777771111222200000000000000000000000000000000
+00000000003ff300003ff300003ff300a7aaaaa9aaa7aaaaaaaaaaa9aaaa7aaaaaaaaaaaaaaaaa99777777771111222200000000000000000000000000000000
+00700700003ff300003ff300003ff300aaaaaaa90aaaaaaaaaaaaa900aa7aaaaaaaaaaaaaaaaa990777777771177772200000000000000bbbbb0000000000000
+00077000003333000033330000333300aaaaaaa900aaaaaaaaaaa90000aaaaaaaaaaaaaaaaaa99007777777711777722000000000000bbbbbbbbb00000000000
+000770000033330000333300003333000aaaaa90000aaaaaaaa99000000aaaaaaaaaaaaaaa99900007777770337777990000000000bbbbbbbbbbbbb000000000
+007007000099990000999900009999000099990000000999999000000000099999999999999000000077770033777799000000000bbbbfbbbbb3bbbb00000000
+000000000090090000f0090000900f0000f00f00000000f00f0000000000000000f00f000000000000f00f003333999900000000bbbbbbbbbbbbbbbbb0000000
+0000000000f00f0000000f0000f0000000f00f00000000f00f0000000000000000f00f000000000000f00f00333399990000000bbbbbbbbbbbbbbbbbbb000000
 000000000000000000000000444444444445444444444444400000000000000000000000000000000000000000000000000000bbbbb3bbbbbbbbbbbbbbb00000
 0000000b00000000000b3000444444444444444444444444400000000000000000000000000000000000000000000000000000bbbbbbbbbbbbbbbbbbbbb00000
 b3bbbbb3bbbbbbbbbbbbbbbb44444454444444445444444440000000000000000000000000000000000000000000000000000bbbbbbbbbbbb3bbbbbbbbbb0000
@@ -627,38 +547,38 @@ eeeefeeeeeeefeee0eeefeee00efffe00e0000e00000000e0000000e00e000ee00eff0ee0eeeffe0
 9999a9999999a9990999a999090000900000009000000000000000000000000000900000009aa0999999a9909999a999000000003333b3333e3ff3e33e3ff3e3
 099aaa90099aaa90009aaa9000000900000000090000000000000000000000000000000000900000099aaa90099aaa9000000000033bbb303333333333355333
 00909990009099900000999000000000000000000000000000000000000000000000000000000000009000090090099000000000003033300333333003333330
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000055500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000576650000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000576650000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000005766665000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000005766665000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000005766665000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000005766615000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000005766115000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000055766665500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000575766165650000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000575766615650000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000005765766165665000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000005765766665665000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000057665766615666500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000057665766165666500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000576665766115666650000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000576665766665666650000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000005766665766665666665000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000005755665775665675565000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000057555565755565755556500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000005555555555555555555000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000077777060507777700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000990066500990000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000060500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000066500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000060500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000066500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000060500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000066500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000060500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000066500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000666666660000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000055500000000000000000000000666666666666660000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000576650000000000000000000066666666666666666600000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000576650000000000000000000666665566666556666660000000000000000000000000000000000000000000000000000000000000000000000
+00000000000005766665000000000000000006666655556666555666666000000000000000000000000000000000000000000000000000000000000000000000
+00000000000005766665000000000000000066776665555666675566666600000000000000000000000000000000000000000000000000000000000000000000
+00000000000005766665000000000000000667666666555666667565556660000000000000000000000000000000000000000000000000000000000000000000
+00000000000005766615000000000000006667666666656666666555555666000000000000000000000000000000000000000000000000000000000000000000
+00000000000005766115000000000000006666666666666667666755577666000000000000000000000000000000000000000000000000000000000000000000
+00000000000055766665500000000000066666666666666766666666666666600000000000000000000000000000000000000000000000000000000000000000
+00000000000575766165650000000000066666666667766666666666656566600000000000000000000000000000000000000000000000000000000000000000
+00000000000575766615650000000000066666666666776666556666555656600000000000000000000000000000000000000000000000000000000000000000
+00000000005765766165665000000000666666555666677765566666666566660000000000000000000000000000000000000000000000000000000000000000
+00000000005765766665665000000000666665566666666765666666666666660000000000000000000000000000000000000000000000000000000000000000
+00000000057665766615666500000000666655555556666665566566666666660000000000000000000000000000000000000000000000000000000000000000
+00000000057665766165666500000000666655556656666666665656666666660000000000000000000000000000000000000000000000000000000000000000
+00000000576665766115666650000000666555556666666666666666666666660000000000000000000000000000000000000000000000000000000000000000
+00000000576665766665666650000000666555556655577666666666666666660000000000000000000000000000000000000000000000000000000000000000
+00000005766665766665666665000000666755555555557666667766666665660000000000000000000000000000000000000000000000000000000000000000
+00000005755665775665675565000000666666655555556666675576566657660000000000000000000000000000000000000000000000000000000000000000
+00000057555565755565755556500000066666655555556666755566755576600000000000000000000000000000000000000000000000000000000000000000
+00000005555555555555555555000000066665555555556666656666655566600000000000000000000000000000000000000000000000000000000000000000
+00000000077777060507777700000000066666666555555666666666666666600000000000000000000000000000000000000000000000000000000000000000
+00000000000990066500990000000000006666666666655666666666666666000000000000000000000000000000000000000000000000000000000000000000
+00000000000000060500000000000000006666666666655555666666666666000000000000000000000000000000000000000000000000000000000000000000
+00000000000000066500000000000000000666666666666666666655566660000000000000000000000000000000000000000000000000000000000000000000
+00000000000000060500000000000000000066666666666666666677666600000000000000000000000000000000000000000000000000000000000000000000
+00000000000000066500000000000000000006666655666666666576666000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000060500000000000000000000666666555566557766660000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000066500000000000000000000066666666667777666600000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000060500000000000000000000000666666666666660000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000066500000000000000000000000000666666660000000000000000000000000000000000000000000000000000000000000000000000000000
 __label__
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
