@@ -34,17 +34,20 @@ player={}
 --game variables
  score=0
  frame=0
+ 
+-- function introtext()
+ 	dialog:queue("this is test text",true)
+  dialog:queue("hello, friend...",true)
+  dialog:queue("it's good to see you",true)
+  dialog:queue("why don't i tell you a story about how i was once a god",true)
+  dialog:queue("people would come from miles around and offer me gifts",true)
+  dialog:queue("but life seems to have passed me by",true)
+  dialog:queue("and now, due to the actions of some 'undesirables', i don't have much time left",true)
+  dialog:queue("anyway... ",true) 
+  dialog:queue("have fun catching whatever those things are falling from the sky",true) 
+  dialog:queue("maybe you'll be able to make some use of them",true) 
+-- end
 
-
-dialog:queue("hello, friend...")
-dialog:queue("it's good to see you")
-dialog:queue("why don't i tell you a story about how i was once a god")
-dialog:queue("people would come from miles around and offer me gifts")
-dialog:queue("but life seems to have passed me by")
-dialog:queue("and now, due to the actions of some 'undesirables', i don't have much time left")
-dialog:queue("anyway... ") 
-dialog:queue("have fun catching whatever those things are falling from the sky") 
-dialog:queue("maybe you'll be able to make some use of them") 
 end
 -->8
 -- update function
@@ -59,8 +62,10 @@ function _update60()
  bunnyjump(3)
  bunnyjump(4)
  
+ 
  dialog:update()
   
+
  if (#dialog.dialog_queue == 0) then
   --playdialog=false
   -- restarts cart once dialog is complete
@@ -164,6 +169,20 @@ function playerbehaviour()
  else
   bowl.spr=4
  end
+ 
+ function introtext()
+ 	dialog:queue("this is test text",true)
+  dialog:queue("hello, friend...",true)
+  dialog:queue("it's good to see you",true)
+  dialog:queue("why don't i tell you a story about how i was once a god",true)
+  dialog:queue("people would come from miles around and offer me gifts",true)
+  dialog:queue("but life seems to have passed me by",true)
+  dialog:queue("and now, due to the actions of some 'undesirables', i don't have much time left",true)
+  dialog:queue("anyway... ",true) 
+  dialog:queue("have fun catching whatever those things are falling from the sky",true) 
+  dialog:queue("maybe you'll be able to make some use of them",true) 
+ end
+
 end
 -->8
 --bunny code
@@ -193,13 +212,6 @@ end
 
 -->8
 --dialog code
-
-
-
- if currentdialog == 2 then
-  dialog:queue("♥♥♥")
-  dialog:queue("♥♥♥♥♥♥")
- end
 
 dialog = {
   x = 16,
@@ -300,6 +312,9 @@ dialog = {
         self.pause_dialog = true
         yield()
       end
+    end
+    if (self.autoplay) then
+    	self.delay(80)
     end
   end,
   shift = function (t)
