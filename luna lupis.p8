@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 32
+version 33
 __lua__
 -- init
 
@@ -12,15 +12,14 @@ __lua__
  player={}
  player.at=0
  player.coords={flr(109),flr(112)}
- player.coords2={player.coords[1],player.coords[2]}
- player.coords2home={-30,120}
+ player.coords2={-1000,112}
  player.size={8,8}
  player.speed=0.5
  player.spr=1
+ player.hasbowl=1
  bowl={}
  bowl.coords={player.coords[1],112}
- bowl.coords2={player.coords2[1],112}
- bowl.coords2home={player.coords2home[1],player.coords2home[2]}
+ bowl.coords2={-1000,112}
  bowl.width=1
  bowl.pixwidth=8
  bowl.flashspr=10
@@ -52,22 +51,15 @@ __lua__
  menutextcol=9
  upgrades={}
  
- upgrades.hasbowllvl1=false
- upgrades.hasbowllvl2=false
  upgrades.bowl="bowl +"
  upgrades.bowlcost=30
  
- upgrades.hasspeedlvl1=false
- upgrades.hasspeedlvl2=false
  upgrades.speed="speed +"
  upgrades.speedcost=75
  
- upgrades.hasscorelvl1=false
- upgrades.hasscorelvl2=false
  upgrades.score="score x2"
  upgrades.scorecost=150
  
- upgrades.hascure=false
  upgrades.cure="cure"
  upgrades.curecost=1000
  
@@ -155,23 +147,48 @@ function updatemenu()
   upgrades.selector.coords[2] = upgrades.selector.coords[2]-10
   upgrades.selector.coords[4] = upgrades.selector.coords[4]-10
  end
+ 
  if btnp(🅾️) and 
  upgrades.selector.coords[2] == 53 then
-  if score >= upgrades.bowlcost then
+  if score >= upgrades.bowlcost and
+  player.hasbowl==2 then
+   upgrades.bowl="max"
+   score-=upgrades.bowlcost
+   upgrades.bowlcost=50
+   player.hasbowl=3
+   bowl.spr=7
+   bowl.width=3
+   bowl.pixwidth=23
+   bowl.coords[1]-=4
+   player.coords2[1]=-1000
+   bowl.coords2[1]=-1000
+   sfx(51)
+  else
+   sfx(50)
+  end
+ end 
+ 
+ 
+ if btnp(🅾️) and 
+ upgrades.selector.coords[2] == 53 then
+  if score >= upgrades.bowlcost and
+  player.hasbowl==1 then
    upgrades.bowl="bowl ++"
    score-=upgrades.bowlcost
    upgrades.bowlcost=100
+   player.hasbowl=2
    bowl.spr=5
    bowl.width=2
    bowl.pixwidth=15
    bowl.coords[1]-=4
-   player.leftoffset=4
-   player.rightoffset=124
+   player.coords2[1]=-1000
+   bowl.coords2[1]=-1000
    sfx(51)
   else
    sfx(50)
   end
  end
+ 
  if btnp(🅾️) and 
  upgrades.selector.coords[2] == 63 then
   if score > upgrades.speedcost then
@@ -291,6 +308,9 @@ function drawgame()
  rectfill(1,1,60,9,12)
  spr(11,2,2)
  print(score,11,3,10)
+ print(player.hasbowl,11,12,0)
+ print(bowl.coords[1],2,18,0)
+ print(bowl.coords2[1],2,26,0)
  
 --draw petals
  for particle in all(particles) do
@@ -310,7 +330,7 @@ function drawmenu()
  rectfill(upgrades.selector.coords[1],
   upgrades.selector.coords[2],
   upgrades.selector.coords[3],
-  upgrades.selector.coords[4],1)
+  upgrades.selector.coords[4],6)
  
  print(upgrades.bowl,24,55,9)
  spr(11,77,54)
@@ -373,35 +393,71 @@ function transplayer()
 --while player is fully on 
 --screen, keeps transition
 --player off screen
-if player.coords[1]>0 and player.coords[1]<128-8 then
- player.coords2[1]=-30
- bowl.coords2[1]=-30
-end
 
+--if player.coords[1]>0 and player.coords[1]<110 then
+-- player.coords2[1]=-50
+-- bowl.coords2[1]=-50
+--end
+
+--bowl 1 -- bowl 1 -- bowl 1--
 --if player exits left
- if player.coords[1]==0 then
+ if bowl.coords[1]==0 and
+ player.hasbowl==1 then
   player.coords2[1]=128
   bowl.coords2[1]=128
  end
- if player.coords[1]==-8 then
+ if bowl.coords[1]==-8 and
+ player.hasbowl==1 then
   player.coords[1]=128-8
   bowl.coords[1]=128-8
+  player.coords2[1]=-1000
+  bowl.coords2[1]=-1000
  end
- 
---if player exits right
- if player.coords[1]==128-player.size[1] then
+-- if player exits right
+ if bowl.coords[1]==128-8 and
+ player.hasbowl==1 then
   player.coords2[1]=-8
   bowl.coords2[1]=-8
  end
- if player.coords[1]==128+player.size[1] then
-  player.coords[1]=8
-  bowl.coords[1]=8
+ if bowl.coords[1]==128 and
+ player.hasbowl==1 then
+  player.coords[1]=0
+  bowl.coords[1]=0
+  player.coords2[1]=-1000
+  bowl.coords2[1]=-1000
  end
+ 
+--bowl 2 -- bowl 2 -- bowl 2--
+--if player exits left
+ if bowl.coords[1]==0 and
+ player.hasbowl==2 then
+  player.coords2[1]=132
+  bowl.coords2[1]=128
+ end
+ if bowl.coords[1]==-16 and
+ player.hasbowl==2 then
+  player.coords[1]=128-12
+  bowl.coords[1]=128-16
+  player.coords2[1]=-1000
+  bowl.coords2[1]=-1000
+ end
+-- if player exits right
+ if bowl.coords[1]==128-16 and
+ player.hasbowl==2 then
+  player.coords2[1]=-12
+  bowl.coords2[1]=-16
+ end
+ if bowl.coords[1]==128 and
+ player.hasbowl==2 then
+  player.coords[1]=4
+  bowl.coords[1]=0
+  player.coords2[1]=-1000
+  bowl.coords2[1]=-1000
+ end
+ 
+ 
 end
-  
-  
-  
-  
+
 -- track time since last particle was caught
  tsincelastpart += 1
   
@@ -1234,7 +1290,7 @@ __sfx__
 01fa00001575500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 01fa00001775500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 47ff002009074090750c0740c07510074100750e0740e07509074090750c0740c07510074100750c0740c07509074090750c0740c07510074100750c0740c07509074090750c0740c07510074100750907409075
-45ff00001851418515155141551511514115151551415515185141851515514155151151411515105141051518514185151551415515115141151515514155151851418515155141551511514115151051410515
+45fe00001851417515155141051513514155151551415515185141751515514105151351417515175141851518514185151551415515115141151515514155151851418515155141551511514115151051410515
 930400003e6343c6343b63400004000043a6343c6343e634006040060400004000040000400004000040000400004000040000400004000040000400004000040000400004000040000400004000040000400004
 5b04000018130191301b13021130261302a1302d1302d1302b130261301e130181301413012130101300e1300d1300c1300a10009100081000610003100001000010001100001000010000100001000010000100
 5d040000232111f2212221120221212012320121201232011f201222011e201232012020123201242012220123201212012120123201232012320121201212012220121201212012220124201212012220123201
@@ -1256,6 +1312,6 @@ a029001f1f6101e6101d6101d6101d6101d6101d6101e6101f610216102261023610246102461023
 000200002063418634006041c6241362400604186540f654006040060400604006040060400604006040060400604006040060400604006040060400604006040060400604006040060400604006040060400604
 01100000185110e551255510050100501005010050100501005010050100501005010050100501005010050100501005010050100501005010050100501005010050100501005010050100501005010050100501
 __music__
-02 2a424344
+02 2a2b4344
 00 2b424344
 
